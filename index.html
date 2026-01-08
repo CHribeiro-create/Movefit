@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#FF1493">
+    
+    <title>MoveFit - Pink OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- TEMA --- */
+        :root {
+            --primary: #FF1493;
+            --primary-light: #FF69B4;
+            --accent: #00E676;
+            --bg-body: #FFF0F5; /* Lavender Blush */
+            --bg-card: #FFFFFF;
+            --text-main: #2D2D2D;
+            --text-sec: #888888;
+            --shadow: 0 10px 30px rgba(255, 20, 147, 0.15);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SCROLL CONTAINERS --- */
+        .scroll-view {
+            height: 100%; overflow-y: auto; padding: 20px; padding-bottom: 100px;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .scroll-view::-webkit-scrollbar { display: none; }
+
+        /* --- SPLASH SCREEN --- */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #ffffff, #ffebf3);
+            z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease;
+        }
+        .neon-logo {
+            font-size: 3rem; font-weight: 800; color: var(--primary);
+            text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(255, 20, 147, 0.3);
+            animation: pulseNeon 1.5s infinite alternate;
+        }
+        .logo-icon { font-size: 4rem; margin-bottom: 10px; display: block; filter: drop-shadow(0 0 10px var(--primary-light)); }
+        
+        @keyframes pulseNeon {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        /* --- SCREENS MANAGEMENT --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body);
+            transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 10; display: none;
+        }
+        .screen.active { transform: translateX(0); display: block; z-index: 20; }
+        .screen.home { transform: translateX(0); display: block; z-index: 10; }
+
+        /* --- HOME SCREEN --- */
+        .home-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .avatar-circle {
+            width: 40px; height: 40px; border-radius: 50%; background: white;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow); cursor: pointer;
+        }
+        
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .app-icon {
+            background: white; border-radius: 25px; aspect-ratio: 1/1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .app-icon:active { transform: scale(0.95); }
+        .icon-emoji { font-size: 3rem; margin-bottom: 10px; z-index: 2; }
+        .icon-label { font-size: 0.9rem; font-weight: 700; color: #333; z-index: 2; }
+        
+        .bg-workout { background: linear-gradient(135deg, #fff, #ffeef5); }
+        .bg-timer { background: linear-gradient(135deg, #fff, #e0f7fa); }
+        .bg-tips { background: linear-gradient(135deg, #fff, #fff8e1); }
+        .bg-nutri { background: linear-gradient(135deg, #fff, #e8f5e9); }
+
+        /* --- BARRA DE PROGRESSO HOME --- */
+        .daily-progress-card {
+            margin-top: 25px; background: white; padding: 20px; border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; font-weight: 700; color: #555; }
+        .progress-track {
+            width: 100%; height: 12px; background: #FFF0F5; border-radius: 10px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            width: 0%; transition: width 0.5s ease; border-radius: 10px;
+        }
+
+        /* --- COMMON UI --- */
+        .header-back { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .btn-back {
+            background: white; border: none; width: 40px; height: 40px; border-radius: 12px;
+            box-shadow: var(--shadow); font-size: 1.2rem; cursor: pointer; color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .page-title { font-size: 1.5rem; font-weight: 800; color: #333; }
+
+        .btn-main {
+            width: 100%; background: linear-gradient(45deg, var(--primary), var(--primary-light));
+            color: white; padding: 18px; border: none; border-radius: 20px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 20px;
+            box-shadow: 0 8px 20px rgba(255, 20, 147, 0.4);
+        }
+        .ios-input {
+            width: 100%; background: white; border: 2px solid #FFE4E1;
+            color: var(--primary); padding: 18px; border-radius: 20px; margin-bottom: 15px;
+            font-size: 1rem; font-weight: 600;
+        }
+
+        /* --- WORKOUT --- */
+        .workout-selector { display: flex; gap: 15px; margin-bottom: 20px; }
+        .w-btn {
+            flex: 1; padding: 15px; background: white; border-radius: 15px; text-align: center;
+            border: 2px solid transparent; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .w-btn.active { border-color: var(--primary); background: #FFF0F5; color: var(--primary); font-weight: 700; }
+        
+        .ex-card {
+            background: white; border-radius: 20px; padding: 18px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .check-circle {
+            width: 30px; height: 30px; border: 2px solid #eee; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: 0.3s; color: white;
+        }
+        .check-circle.checked { background: var(--accent); border-color: var(--accent); }
+        .btn-video {
+            display: inline-flex; align-items: center; gap: 5px;
+            margin-top: 5px; font-size: 0.75rem; color: var(--primary); font-weight: 700;
+            background: #FFE4E1; padding: 5px 12px; border-radius: 15px; text-decoration: none; cursor: pointer;
+        }
+
+        /* --- MODAL DE VÍDEO E NUTRI --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(5px);
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        
+        .video-modal, .nutri-modal {
+            background: white; width: 90%; max-width: 500px; padding: 0;
+            border-radius: 30px; position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); overflow: hidden;
+            max-height: 90vh; display: flex; flex-direction: column;
+        }
+        .nutri-modal { padding: 30px; text-align: center; }
+
+        .video-content { padding: 25px; overflow-y: auto; text-align: center; }
+        .video-title { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 15px; line-height: 1.2; }
+        .video-desc { 
+            font-size: 0.9rem; color: #555; line-height: 1.6; 
+            background: #FFF0F5; padding: 20px; border-radius: 20px; margin-bottom: 20px; text-align: left;
+        }
+        
+        .btn-close-modal {
+            position: absolute; top: 15px; right: 15px; 
+            background: #eee; color: #333; 
+            border: none; width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; font-weight: bold; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 1.2rem;
+        }
+        .btn-close-modal:active { transform: scale(0.95); background: #ddd; }
+
+        /* --- NUTRI VIEW --- */
+        .supp-card {
+            background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .tier-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background: #fafafa; border-radius: 10px; margin-top: 8px;
+        }
+        .tier-tag { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; padding: 3px 8px; border-radius: 5px; color: white; margin-right: 5px; }
+        .tag-top { background: linear-gradient(45deg, #FFD700, #FFA500); }
+        .tag-mid { background: linear-gradient(45deg, #00E676, #00C853); }
+        .tag-low { background: linear-gradient(45deg, #B0BEC5, #78909C); }
+        
+        /* Nutri Tips List */
+        .nutri-tips-list { text-align: left; margin: 20px 0; background: #FFF0F5; padding: 15px; border-radius: 15px; }
+        .nutri-tips-list li { margin-bottom: 10px; font-size: 0.85rem; color: #555; list-style: none; display: flex; gap: 8px; }
+        .nutri-tips-list li:before { content: '🥑'; }
+
+        /* --- TIMER VIEW --- */
+        .timer-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; }
+        .timer-circle {
+            width: 250px; height: 250px; border-radius: 50%;
+            background: white; border: 10px solid #f0f0f0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 4rem; font-weight: 800; color: var(--primary);
+            box-shadow: var(--shadow); margin-bottom: 30px; font-variant-numeric: tabular-nums;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .timer-circle.running { border-color: var(--primary-light); }
+        .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+        .btn-preset { background: white; border: none; padding: 15px; border-radius: 15px; font-weight: 700; color: #555; cursor: pointer; }
+
+        /* --- LIBRARY CARDS --- */
+        .lib-card {
+            background: white; padding: 15px; border-radius: 20px; margin-bottom: 15px;
+            display: flex; align-items: center; gap: 15px; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: transform 0.2s;
+        }
+        .lib-card:active { transform: scale(0.98); }
+        .lib-icon {
+            width: 50px; height: 50px; background: #FFF0F5; border-radius: 15px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SPLASH -->
+    <div id="splash-screen">
+        <div class="logo-icon">👑</div>
+        <div class="neon-logo">MoveFit</div>
+        <p>Carregando seu espaço...</p>
+    </div>
+
+    <!-- 1. HOME SCREEN -->
+    <div id="screen-home" class="screen home active">
+        <div class="scroll-view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                <div>
+                    <p style="font-size:0.8rem; color:var(--text-sec);">BEM-VINDA,</p>
+                    <h2 id="home-username" style="color:var(--primary); font-weight:800;">Atleta</h2>
+                </div>
+                <div class="avatar-circle" onclick="resetApp()">⚙️</div>
+            </div>
+
+            <!-- GRID APPS -->
+            <div class="app-grid">
+                <div class="app-icon bg-workout" onclick="openScreen('workout')">
+                    <div class="icon-emoji">🏋️‍♀️</div><div class="icon-label">Treino</div>
+                </div>
+                <div class="app-icon bg-timer" onclick="openScreen('timer')">
+                    <div class="icon-emoji">⏱️</div><div class="icon-label">Cronômetro</div>
+                </div>
+                <div class="app-icon bg-tips" onclick="openScreen('tips')">
+                    <div class="icon-emoji">💡</div><div class="icon-label">Biblioteca</div>
+                </div>
+                <div class="app-icon bg-nutri" onclick="openScreen('nutri')">
+                    <div class="icon-emoji">🥗</div><div class="icon-label">Nutri+</div>
+                </div>
+            </div>
+
+            <!-- STATUS RÁPIDO -->
+            <div class="daily-progress-card">
+                <div class="progress-header">
+                    <span>Meta Diária</span>
+                    <span id="progress-text">0/0</span>
+                </div>
+                <div class="progress-track">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p style="font-size:0.75rem; color:#999; margin-top:10px; text-align:center;">
+                    Continue firme! Cada treino conta. ✨
+                </p>
+            </div>
+
+            <div style="margin-top: 20px; background: white; padding: 20px; border-radius: 20px; box-shadow: var(--shadow); text-align: center;">
+                <p style="font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: 600;">Seu Status Atual</p>
+                <h1 id="home-imc" style="font-size: 2.5rem; margin: 5px 0;">--</h1>
+                <span id="home-badge" style="background: #eee; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; font-weight: 600; color: white;">Calculando...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TREINO -->
+    <div id="screen-workout" class="screen">
+        <div class="scroll-view">
+            <div class="header-back">
+                <button class="btn-back" onclick="closeScreen()">❮</button>
+                <span class="page-title">Meu Treino</span>
+            </div>
+            <div class="workout-selector">
+                <div class="w-btn active" id="tab-A" onclick="loadWorkout('A')">Inferior</div>
+                <div class="w-btn" id="tab-B" onclick="loadWorkout('B')">Superior</div>
+            </div>
+            <div id="workout-list"></div>
+        </div>
+    </div>
+
+    <!-- 3. NUTRIÇÃO + POPUP -->
+    <div id="screen-nutri" class="screen">
+        <div class="scroll-view">
+            <div class="header-back">
+                <button class="btn-back" onclick="closeScreen()">❮</button>
+                <span class="page-title">Suplementação</span>
+            </div>
+            <p style="margin-bottom: 20px; color: #888; font-size: 0.9rem;">Melhores opções para potencializar resultados.</p>
+            <div id="nutri-list"></div>
+        </div>
+        
+        <!-- POPUP ALERTA NUTRICIONAL -->
+        <div id="nutri-alert-modal" class="modal-overlay">
+            <div class="nutri-modal">
+                <span class="nutri-icon">🥗</span>
+                <h2 style="color: var(--primary); margin:0;">Atenção à Dieta!</h2>
+                <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                    Seu IMC indica que uma alimentação limpa será <strong>80% do seu resultado</strong>.
+                </p>
+                <ul class="nutri-tips-list">
+                    <li><strong>Déficit Calórico:</strong> Consuma menos calorias do que gasta.</li>
+                    <li><strong>Proteína em todas as refeições:</strong> Aumenta saciedade.</li>
+                    <li><strong>Água:</strong> Beba 35ml por kg de peso corporal.</li>
+                    <li><strong>Evite:</strong> Açúcar refinado e farinha branca.</li>
+                </ul>
+                <button class="btn-main" onclick="closeNutriModal()" style="margin-top:0; padding:12px;">Entendido, Foco Total!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. TIMER -->
+    <div id="screen-timer" class="screen">
+        <div class="scroll-view" style="display:flex; flex-direction:column;">
+            <div class="header-back"><button class="btn-back" onclick="closeScreen()">❮</button><span class="page-title">Cronômetro</span></div>
+            <div class="timer-container">
+                <div id="timer-circle" class="timer-circle">00:00</div>
+                <div class="preset-grid">
+                    <button class="btn-preset" onclick="startTimer(30)">30s</button>
+                    <button class="btn-preset" onclick="startTimer(45)">45s</button>
+                    <button class="btn-preset" onclick="startTimer(60)">60s</button>
+                    <button class="btn-preset" onclick="startTimer(90)">90s</button>
+                    <button class="btn-preset" onclick="startTimer(120)">2m</button>
+                    <button class="btn-preset" style="color:var(--primary);" onclick="stopTimer()">PARAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. BIBLIOTECA (TIPS) -->
+    <div id="screen-tips" class="screen">
+        <div class="scroll-view">
+            <div class="header-back"><button class="btn-back" onclick="closeScreen()">❮</button><span class="page-title">Biblioteca</span></div>
+            <p style="color:#888; font-size:0.9rem; margin-bottom:20px;">Toque para aprender o movimento correto.</p>
+            <div id="tips-list"></div>
+        </div>
+    </div>
+
+    <!-- 6. PROFILE SETUP -->
+    <div id="screen-profile" class="screen" style="z-index: 100;">
+        <div class="scroll-view" style="display: flex; flex-direction: column; justify-content: center;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div class="logo-icon">✨</div>
+                <h1>Olá, Atleta!</h1>
+                <p>Vamos configurar seu perfil para começar.</p>
+            </div>
+            <input type="text" id="setupName" class="ios-input" placeholder="Seu Nome">
+            <input type="number" id="setupHeight" class="ios-input" placeholder="Altura (cm ou m)" inputmode="decimal">
+            <input type="number" id="setupWeight" class="ios-input" placeholder="Peso (kg)" inputmode="decimal">
+            <button class="btn-main" onclick="finishSetup()">Tudo Pronto!</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE EXERCÍCIO (VÍDEO LINK) -->
+    <div id="exercise-modal" class="modal-overlay">
+        <div class="video-modal">
+            <button type="button" class="btn-close-modal" onclick="closeExerciseModal()">✕</button>
+            <div class="video-content">
+                <div class="video-title" id="modal-ex-title">Nome do Exercício</div>
+                
+                <a id="btn-watch-youtube" href="#" target="_blank" class="btn-main" style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:20px; text-decoration:none;">
+                    <span>▶</span> Assistir no YouTube
+                </a>
+
+                <div class="video-desc" id="modal-ex-desc">Descrição técnica...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DADOS COMPLETOS ---
+        const workoutsData = {
+            'A': [
+                { name: "Agachamento Livre", reps: "3x12", desc: "<strong>Postura:</strong> Pés na largura dos ombros... <br>Quebre a paralela." },
+                { name: "Elevação Pélvica", reps: "3x12 (Pico)", desc: "<strong>Foco:</strong> Glúteos. Contraia no topo por 1s." },
+                { name: "Stiff com Halteres", reps: "3x12", desc: "Coluna RETA, empinando o glúteo." },
+                { name: "Cadeira Abdutora", reps: "3x15", desc: "Incline o tronco levemente à frente." },
+                { name: "Panturrilha em Pé", reps: "3x20", desc: "Amplitude máxima." },
+                { name: "Prancha Abdominal", reps: "3x30s", desc: "Corpo em linha reta." }
+            ],
+            'B': [
+                { name: "Desenv. Halteres", reps: "3x12", desc: "Empurre para cima sem estender totalmente." },
+                { name: "Elevação Lateral", reps: "3x12", desc: "Como se despejasse uma jarra de água." },
+                { name: "Remada Curvada", reps: "3x12", desc: "Puxe em direção ao umbigo." },
+                { name: "Tríceps Corda", reps: "3x12", desc: "Abra a corda no final." },
+                { name: "Rosca Direta", reps: "3x12", desc: "Sem balançar o corpo." },
+                { name: "Abdominal Supra", reps: "3x20", desc: "Tire apenas as escápulas do chão." }
+            ]
+        };
+
+        const supplementsData = [
+            { name: "Termogênico", desc: "Acelera metabolismo.", tiers: [{l:"Top",n:"Lipo-6 Black",s:"lipo 6 black"},{l:"Custo",n:"Kimera",s:"kimera iridium"}] },
+            { name: "Pré-Treino", desc: "Energia e foco.", tiers: [{l:"Top",n:"C4 Beta",s:"c4 beta pump"},{l:"Custo",n:"Haze",s:"haze growth"}] },
+            { name: "Creatina", desc: "Força e volume.", tiers: [{l:"Top",n:"Creapure Dux",s:"creatina dux"},{l:"Custo",n:"Growth",s:"creatina growth"}] },
+            { name: "Whey Protein", desc: "Proteína magra.", tiers: [{l:"Top",n:"Gold Standard",s:"whey gold"},{l:"Custo",n:"Growth",s:"whey growth"}] }
+        ];
+
+        // --- ESTADO ---
+        let user = null;
+        let timerInterval = null;
+
+        // --- INICIALIZAÇÃO ---
+        window.onload = () => {
+            const saved = localStorage.getItem('movefit_user_v4');
+            
+            // RESET DIÁRIO AUTOMÁTICO
+            const hoje = new Date().toDateString();
+            const ultimoAcesso = localStorage.getItem('movefit_last_day');
+            if(ultimoAcesso !== hoje) {
+                localStorage.removeItem('movefit_checks');
+                localStorage.setItem('movefit_last_day', hoje);
+            }
+
+            // FECHAR MODAIS CLICANDO FORA (UX)
+            document.getElementById('exercise-modal').addEventListener('click', (e) => {
+                if(e.target.id === 'exercise-modal') closeExerciseModal();
+            });
+            document.getElementById('nutri-alert-modal').addEventListener('click', (e) => {
+                if(e.target.id === 'nutri-alert-modal') closeNutriModal();
+            });
+
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 600);
+                
+                if (saved) {
+                    user = JSON.parse(saved);
+                    updateHomeData();
+                    updateHomeProgress(); 
+                } else {
+                    document.getElementById('screen-profile').classList.add('active');
+                }
+            }, 2000);
+        };
+
+        // --- NAVEGAÇÃO SEGURA ---
+        function openScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('screen-' + screenId);
+            if(target) {
+                target.classList.add('active');
+                if(screenId === 'workout') loadWorkout('A');
+                if(screenId === 'nutri') loadNutri();
+                if(screenId === 'tips') loadTips();
+            }
+        }
+
+        function closeScreen() {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById('screen-home').classList.add('active');
+            updateHomeProgress(); // Garante atualização ao voltar
+        }
+
+        // --- PERFIL ---
+        function finishSetup() {
+            const name = document.getElementById('setupName').value;
+            let h = document.getElementById('setupHeight').value;
+            const w = document.getElementById('setupWeight').value;
+
+            if(!name || !h || !w) return alert("Por favor, preencha todos os campos!");
+            h = parseFloat(h);
+            if(h > 3) h = h / 100;
+
+            user = { name, h, w: parseFloat(w) };
+            localStorage.setItem('movefit_user_v4', JSON.stringify(user));
+            updateHomeData();
+            closeScreen();
+        }
+
+        function updateHomeData() {
+            if(!user) return;
+            document.getElementById('home-username').innerText = user.name;
+            const imc = (user.w / (user.h * user.h)).toFixed(1);
+            document.getElementById('home-imc').innerText = imc;
+            
+            let status = '', color = '';
+            const badge = document.getElementById('home-badge');
+            
+            if(imc < 18.5) { 
+                status="Abaixo do Peso"; color="#FFB74D"; 
+            } else if(imc < 25) { 
+                status="Peso Ideal"; color="#00E676"; 
+            } else if(imc < 30) { 
+                status="Sobrepeso"; color="#FFC400"; 
+            } else { 
+                status="Obesidade"; color="#FF1744"; 
+            }
+            
+            badge.innerText = status;
+            badge.style.backgroundColor = color;
+        }
+
+        // --- PROGRESSO DINÂMICO ---
+        function updateHomeProgress() {
+            const checks = JSON.parse(localStorage.getItem('movefit_checks') || '{}');
+            const totalChecks = Object.keys(checks).filter(k => checks[k]).length;
+            
+            // Meta dinâmica: Pega a quantidade de exercícios do Treino A
+            const goal = workoutsData.A.length; 
+            
+            let percent = (totalChecks / goal) * 100;
+            if(percent > 100) percent = 100;
+
+            document.getElementById('progress-text').innerText = `${totalChecks}/${goal}`;
+            document.getElementById('progress-fill').style.width = `${percent}%`;
+        }
+
+        function resetApp() {
+            if(confirm("Deseja apagar seus dados e começar do zero?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // --- TREINO ---
+        function loadWorkout(type) {
+            document.querySelectorAll('.w-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + type).classList.add('active');
+
+            const list = document.getElementById('workout-list');
+            const exercises = workoutsData[type];
+            const checks = JSON.parse(localStorage.getItem('movefit_checks') || '{}');
+            
+            let htmlContent = '';
+            exercises.forEach((ex, index) => {
+                const checkKey = `${type}_${index}`;
+                const isChecked = checks[checkKey] ? 'checked' : '';
+                const exStr = encodeURIComponent(JSON.stringify(ex));
+                
+                htmlContent += `
+                <div class="ex-card">
+                    <div style="flex:1;">
+                        <h4 style="margin:0; font-size:1rem; color:#333;">${ex.name}</h4>
+                        <p style="margin:0; font-size:0.8rem; color:#888;">${ex.reps}</p>
+                        <div class="btn-video" onclick="openExerciseModal('${exStr}')">🎥 Ver Técnica</div>
+                    </div>
+                    <div class="check-circle ${isChecked}" onclick="toggleCheck(this, '${checkKey}')">✔</div>
+                </div>`;
+            });
+            list.innerHTML = htmlContent;
+        }
+
+        function toggleCheck(el, key) {
+            el.classList.toggle('checked');
+            const checks = JSON.parse(localStorage.getItem('movefit_checks') || '{}');
+            checks[key] = el.classList.contains('checked');
+            localStorage.setItem('movefit_checks', JSON.stringify(checks));
+            
+            // Atualiza barra de progresso em tempo real
+            updateHomeProgress();
+        }
+
+        // --- MODAIS ---
+        function openExerciseModal(exStr) {
+            const ex = JSON.parse(decodeURIComponent(exStr));
+            const modal = document.getElementById('exercise-modal');
+            const searchUrl = `https://www.youtube.com/results?search_query=execução+correta+${encodeURIComponent(ex.name)}`;
+            
+            document.getElementById('modal-ex-title').innerText = ex.name;
+            document.getElementById('modal-ex-desc').innerHTML = `<strong>Dica:</strong> ${ex.desc}`;
+            document.getElementById('btn-watch-youtube').href = searchUrl;
+            
+            modal.classList.add('open');
+        }
+
+        function openLibModal(name, desc) {
+             const ex = { name: name, desc: desc };
+             const exStr = encodeURIComponent(JSON.stringify(ex));
+             openExerciseModal(exStr);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+        
+        // Função específica para o botão X do exercício
+        function closeExerciseModal() {
+            document.getElementById('exercise-modal').classList.remove('open');
+        }
+
+        // --- NUTRIÇÃO (Performance Otimizada) ---
+        function loadNutri() {
+            const list = document.getElementById('nutri-list');
+            const imc = user.w / (user.h * user.h);
+            
+            if(imc > 25 && !sessionStorage.getItem('alerted_nutri')) {
+                document.getElementById('nutri-alert-modal').classList.add('open');
+                sessionStorage.setItem('alerted_nutri', 'true');
+            }
+
+            // ✅ Melhoria 1: String única
+            let htmlContent = '';
+            supplementsData.forEach(sup => {
+                let tiersHtml = sup.tiers.map(t => {
+                    const tagClass = t.l === 'Top' ? 'tag-top' : (t.l === 'Custo' ? 'tag-mid' : 'tag-low');
+                    return `
+                    <div class="tier-row">
+                        <div style="display:flex; align-items:center;">
+                            <span class="tier-tag ${tagClass}">${t.l}</span>
+                            <span style="font-size:0.85rem; font-weight:600;">${t.n}</span>
+                        </div>
+                        <a href="https://www.google.com/search?q=comprar+${t.s}&tbm=shop" target="_blank" style="text-decoration:none; color:var(--primary); font-weight:bold; font-size:0.75rem;">Ver ➜</a>
+                    </div>`;
+                }).join('');
+
+                htmlContent += `
+                <div class="supp-card">
+                    <h3 style="color:#333;">${sup.name}</h3>
+                    <p style="color:#666; font-size:0.9rem;">${sup.desc}</p>
+                    ${tiersHtml}
+                </div>`;
+            });
+            list.innerHTML = htmlContent;
+        }
+
+        function closeNutriModal() {
+            document.getElementById('nutri-alert-modal').classList.remove('open');
+        }
+
+        // --- DICAS (Performance Otimizada) ---
+        function loadTips() {
+            const list = document.getElementById('tips-list');
+            const all = [...workoutsData.A, ...workoutsData.B];
+            
+            // ✅ Melhoria 1: String única
+            let htmlContent = '';
+            all.forEach(ex => {
+                const exStr = encodeURIComponent(JSON.stringify(ex));
+                
+                htmlContent += `
+                <div class="lib-card" onclick="openExerciseModal('${exStr}')">
+                    <div class="lib-icon">💡</div>
+                    <div>
+                        <h4 style="margin:0; color:#333;">${ex.name}</h4>
+                        <p style="margin:0; font-size:0.8rem; color:#888;">Toque para aprender</p>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = htmlContent;
+        }
+
+        // --- TIMER (UX Otimizada) ---
+        // ✅ Melhoria 2: Feedback visual e vibratório sem alert()
+        function startTimer(seconds) {
+            stopTimer(); // Limpa estado anterior
+            let remaining = seconds;
+            const circle = document.getElementById('timer-circle');
+            
+            // Reseta visual para estado inicial
+            circle.classList.add('running');
+            circle.style.backgroundColor = "white";
+            circle.style.color = "var(--primary)";
+            circle.style.fontSize = "3.5rem";
+
+            updateTimerDisplay(remaining);
+            
+            timerInterval = setInterval(() => {
+                remaining--;
+                updateTimerDisplay(remaining);
+                
+                if(remaining <= 0) {
+                    stopTimer();
+                    finishTimerVisuals();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            const circle = document.getElementById('timer-circle');
+            circle.classList.remove('running');
+            
+            // Se foi parado manualmente, volta ao normal
+            if(circle.innerText !== "FIM!") {
+                circle.innerText = "00:00";
+                circle.style.backgroundColor = "white";
+                circle.style.color = "var(--primary)";
+            }
+        }
+
+        function finishTimerVisuals() {
+            const circle = document.getElementById('timer-circle');
+            
+            // Feedback Tátil (Vibração)
+            if ("vibrate" in navigator) {
+                navigator.vibrate([200, 100, 200]); // Vibra-Pausa-Vibra
+            }
+
+            // Feedback Visual
+            circle.innerText = "FIM!";
+            circle.style.backgroundColor = "var(--primary)"; // Fundo rosa
+            circle.style.color = "white"; // Texto branco
+        }
+
+        function updateTimerDisplay(s) {
+            const min = Math.floor(s / 60).toString().padStart(2, '0');
+            const sec = (s % 60).toString().padStart(2, '0');
+            document.getElementById('timer-circle').innerText = `${min}:${sec}`;
+        }
+
+    </script>
+</body>
+</html>
+
+
